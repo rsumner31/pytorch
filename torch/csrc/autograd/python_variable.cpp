@@ -294,6 +294,30 @@ template struct Rob<TensorImpl_Type, &TensorImpl::type_>;
 
 }
 
+namespace {
+
+// XXX: This is a hack to access private TensorImpl::type_
+// http://bloglitb.blogspot.com/2011/12/access-to-private-members-safer.html
+// This is currently needed because module.float() changes the type of the
+// data field of each variable. We should fix this and not allow changing the
+// type of var.data.
+
+template<typename Tag, typename Tag::type M>
+struct Rob {
+  friend typename Tag::type get(Tag) {
+    return M;
+  }
+};
+
+struct TensorImpl_Type {
+  typedef Type* TensorImpl::*type;
+  friend type get(TensorImpl_Type);
+};
+
+template struct Rob<TensorImpl_Type, &TensorImpl::type_>;
+
+}
+
 int THPVariable_set_data(THPVariable *self, PyObject *data)
 {
   HANDLE_TH_ERRORS
